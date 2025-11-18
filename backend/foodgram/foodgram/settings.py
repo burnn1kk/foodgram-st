@@ -25,7 +25,7 @@ SECRET_KEY = 'django-insecure-%c_x3amuz=1ihect135#q8yrvpzs1(tzsmb=!*7rc1fmqwizq$
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['0.0.0.0','192.168.1.58']
+#ALLOWED_HOSTS = ['0.0.0.0','192.168.1.58']
 
 
 # Application definition
@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     'users.apps.UsersConfig'
 ]
 
+
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -54,15 +55,31 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
+
+
 REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticatedOrReadOnly', 
     ],
 
-    'DEFAULT_AUTHENTICATION_CLASSES': [
-        'rest_framework.authentication.TokenAuthentication',
-    ]
+    "DEFAULT_AUTHENTICATION_CLASSES": [
+        "rest_framework.authentication.TokenAuthentication",
+    ],
+
 } 
+
+DJOSER = {
+    "LOGIN_FIELD": "email",
+    "SERIALIZERS": {
+        "user_create": "users.serializers.UserCreateSerializer",
+        "user": "users.serializers.CustomUserSerializer",
+        "current_user": "users.serializers.CustomUserSerializer",
+        "token_create": "users.serializers.CustomTokenCreateSerializer"
+    }
+}
+
+AUTH_USER_MODEL = "users.User"
+
 
 ROOT_URLCONF = 'foodgram.urls'
 
