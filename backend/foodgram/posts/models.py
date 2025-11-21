@@ -1,24 +1,24 @@
 from django.db import models
 from django.contrib.auth import get_user_model
 
-User = get_user_model()
+from users.models import User
 
 class Ingredient(models.Model):
-    name = models.CharField(max_length=128)
-    measurement_unit = models.CharField(max_length=16)
+    name = models.CharField(max_length=128, blank=False)
+    measurement_unit = models.CharField(max_length=16, blank=False)
 
 class Recipe(models.Model):
-    author = models.ForeignKey(User, on_delete=models.CASCADE,related_name='recipes')
-    name = models.CharField(max_length=128)
-    picture = models.ImageField()
-    description = models.TextField()
-    ingredients = models.ManyToManyField(Ingredient,through='RecipeIngredient',related_name='recipes')
-    cook_time = models.PositiveIntegerField(help_text="Время в минутах")
+    author = models.ForeignKey(User, on_delete=models.CASCADE,related_name='recipes', blank=False)
+    name = models.CharField(max_length=128, blank=False)
+    image = models.ImageField(blank=True)
+    text = models.TextField(blank=False)
+    ingredients = models.ManyToManyField(Ingredient)
+    cooking_time = models.PositiveIntegerField(help_text="Время в минутах", blank=False)
 
-class RecipeIngredient(models.Model):
+class Favourite(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
     recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE)
-    ingredient = models.ForeignKey(Ingredient, on_delete=models.CASCADE)
-    amount = models.FloatField()
 
-    class Meta:
-        unique_together = ('recipe', 'ingredient') #чтобы один ингредиент не повторялся в рецепте несколько раз
+class ShoppingCart(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE)
