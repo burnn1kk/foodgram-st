@@ -15,10 +15,31 @@ class Recipe(models.Model):
     ingredients = models.ManyToManyField(Ingredient)
     cooking_time = models.PositiveIntegerField(help_text="Время в минутах", blank=False)
 
-class Favourite(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+class RecipeIngredient(models.Model):
     recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE)
+    ingredient = models.ForeignKey(Ingredient, on_delete=models.CASCADE)
+    amount = models.PositiveIntegerField()
+
+class Favourite(models.Model):
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="favorites"   
+    )
+    recipe = models.ForeignKey(
+        Recipe,
+        on_delete=models.CASCADE,
+        related_name="favorited_by"  
+    )
 
 class ShoppingCart(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-    recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE)
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="shopping_cart"
+    )
+    recipe = models.ForeignKey(
+        Recipe,
+        on_delete=models.CASCADE,
+        related_name="in_carts"
+    )
