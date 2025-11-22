@@ -3,15 +3,16 @@ from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 from rest_framework.decorators import action
 
-from .models import User
+from .models import User, Subscription
 from .serializers import (
     UserOutputSerializer,
     UserCreateSerializer,
     UserSetPasswordSerializer,
 )
 
-
 class UserViewSet(viewsets.ModelViewSet):
+    queryset = User.objects.all()
+
     def get_permissions(self):
         action = self.action
         if action == "list" or action == "create" or action == "retrieve":
@@ -78,4 +79,25 @@ class UserViewSet(viewsets.ModelViewSet):
         user.set_password(new_password)
         user.save()
 
-        return Response(status=204)
+    @action(detail=True, methods=["post","delete"], permission_classes=[IsAuthenticated], url_name='subscribe')
+    def subscribe(self, request, pk=None):
+        author = self.get_object()
+        user = request.user
+
+        if request.method == 'POST':
+            if user == author:
+                return Response({"error": "Нельзя подписаться на себя"}, status=400)
+
+            Subscription.objects.get_or_create(
+                subsciber=user,
+                author=author
+            )
+            return Response({"status": "subscribed"}, status=201)
+        
+        if request.method == 'DELETE':
+            Subscription.objects.filter(
+                subsciber=user,
+                author=author
+            ).delete()
+            return Response({"status": "unsubscribed"}, status=204)
+        

@@ -1,11 +1,13 @@
 from rest_framework import viewsets, filters
-from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework import permissions
 from rest_framework.response import Response
 
 from .models import Ingredient, Recipe, RecipeIngredient
-from .serializer import IngredientSerializer, RecipeGetSerializer, RecipePostSerializer
+from .serializer import IngredientSerializer, RecipeGetSerializer, RecipePostSerializer, SubscribtionsSerializer
 from .pagination import RecipePagination
 from .permissions import OwnerOrReadOnly
+
+from users.models import User
 
 class RecipesViewSet(viewsets.ModelViewSet):
     queryset = Recipe.objects.all()
@@ -44,3 +46,10 @@ class IngredientsViewSet(viewsets.ReadOnlyModelViewSet):
     
     filter_backends = [filters.SearchFilter]
     search_fields = ['^name']
+
+class SubscribtionsViewSet(viewsets.ReadOnlyModelViewSet):
+    serializer_class = SubscribtionsSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        return User.objects.filter(subscribers__subsciber=self.request.user).distinct()

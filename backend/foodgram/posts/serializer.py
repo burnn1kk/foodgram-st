@@ -113,4 +113,19 @@ class RecipePostSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("Время приготовления должно быть больше 0")
         return value
 
-    
+
+class SubscribtionsSerializer(serializers.ModelSerializer):
+    recipes = serializers.SerializerMethodField()
+    is_subscribed = serializers.SerializerMethodField()
+    class Meta:
+        model = User
+        fields = ("email", "id", "username", "first_name", "last_name", "is_subscribed", "recipes")
+
+    def get_is_subscribed(self, obj):
+        return True
+
+    def get_recipes(self, obj):
+        recipes = obj.recipes.all()
+        request = self.context.get("request")
+        return RecipeGetSerializer(recipes, many=True, context={"request": request}).data
+        
