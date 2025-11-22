@@ -10,7 +10,7 @@ class Ingredient(models.Model):
 class Recipe(models.Model):
     author = models.ForeignKey(User, on_delete=models.CASCADE,related_name='recipes', blank=False)
     name = models.CharField(max_length=128, blank=False)
-    image = models.ImageField(blank=True)
+    image = models.ImageField(upload_to='recipes/images/',null=False,blank=True)
     text = models.TextField(blank=False)
     ingredients = models.ManyToManyField(Ingredient)
     cooking_time = models.PositiveIntegerField(help_text="Время в минутах", blank=False)

@@ -1,7 +1,7 @@
 from rest_framework import serializers
 
 from .models import User
-
+from foodgram.common_classes import Base64ImageField
 
 class UserCreateSerializer(serializers.ModelSerializer):
     class Meta:
@@ -50,3 +50,15 @@ class UserOutputSerializer(serializers.ModelSerializer):
 class UserSetPasswordSerializer(serializers.Serializer):
     current_password = serializers.CharField(required=True)
     new_password = serializers.CharField(required=True)
+
+class UserAvatarSerializer(serializers.ModelSerializer):
+    avatar = Base64ImageField(required=True, allow_null=False)
+
+    class Meta:
+        model = User
+        fields = ("avatar",)
+
+    def validate_avatar(self, value):
+        if value is None:
+            raise serializers.ValidationError("avatar cannot be null")
+        return value

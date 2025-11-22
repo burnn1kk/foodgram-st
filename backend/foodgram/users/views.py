@@ -8,7 +8,9 @@ from .serializers import (
     UserOutputSerializer,
     UserCreateSerializer,
     UserSetPasswordSerializer,
+    UserAvatarSerializer
 )
+from .permissions import OwnerOrReadOnly
 
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
@@ -29,23 +31,25 @@ class UserViewSet(viewsets.ModelViewSet):
         serializer = UserOutputSerializer(
             page, context={"request": request}, many=True
         )  # many=True указывает сериализатору что объектов больше 1 => обрабатывать каждый отдельно
-        return self.get_paginated_response(serializer.data)
+        paginated = self.get_paginated_response(serializer.data)
+        return Response(paginated.data, status=200)
 
     def retrieve(self, request, *args, **kwargs):
         user_id = self.kwargs.get("pk")
-        user = User.objects.get(
-            id=user_id
-        )  # здесь был интересный момент когда передавая в serializer queryset при many=False получалась ошибка об отсутсвия поля
-        serializer = UserOutputSerializer(
-            user, context={"request": request}
-        )  # при many=False в srializer должен передаваться строго 1 объект
-        return Response(serializer.data)  # queryset из 1 объекта != 1 объект => ошибка
-
+        if User.objects.filter(id=user_id).exists():
+            user = User.objects.get(
+                id=user_id
+            )  # здесь был интересный момент когда передавая в serializer queryset при many=False получалась ошибка об отсутсвия поля
+            serializer = UserOutputSerializer(
+                user, context={"request": request}
+            )  # при many=False в srializer должен передаваться строго 1 объект
+            return Response(serializer.data, status=200)  # queryset из 1 объекта != 1 объект => ошибка
+        return Response(status=404)
     def create(self, request):
         serializer = UserCreateSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
-            return Response(serializer.data)
+            return Response(serializer.data, status=201)
         return Response(serializer.errors, status=400)
 
     @action(
@@ -55,7 +59,7 @@ class UserViewSet(viewsets.ModelViewSet):
         user = request.user
         id = user.id
         serializer = UserOutputSerializer(user, context={"request": request})
-        return Response(serializer.data)
+        return Response(serializer.data, status=200)
 
     @action(detail=False, methods=["post"], permission_classes=[IsAuthenticated])
     def set_password(self, request):
@@ -78,6 +82,7 @@ class UserViewSet(viewsets.ModelViewSet):
 
         user.set_password(new_password)
         user.save()
+        return Response(status=204)
 
     @action(detail=True, methods=["post","delete"], permission_classes=[IsAuthenticated], url_name='subscribe')
     def subscribe(self, request, pk=None):
@@ -95,9 +100,27 @@ class UserViewSet(viewsets.ModelViewSet):
             return Response({"status": "subscribed"}, status=201)
         
         if request.method == 'DELETE':
-            Subscription.objects.filter(
+            if Subscription.objects.filter(
                 subsciber=user,
                 author=author
-            ).delete()
-            return Response({"status": "unsubscribed"}, status=204)
+            ).exists():
+                Subscription.objects.filter(
+                    subsciber=user,
+                    author=author
+                ).delete()
+                return Response({"status": "unsubscribed"}, status=204)
+            return Response(status=404)
+            
+    @action(detail=False, methods=["put", "delete"], permission_classes=[OwnerOrReadOnly,], url_path = 'me/avatar')
+    def avatar(self, request, pk=None):
+        user = request.user
+
+        if request.method == 'PUT':
+            serializer = UserAvatarSerializer(user, data=request.data)
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
+            return Response(serializer.data, status=200)
         
+        if request.method == 'DELETE':
+            user.avatar.delete(save=True)
+            return Response(status=204)

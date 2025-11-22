@@ -3,6 +3,8 @@ from rest_framework import serializers
 from .models import Ingredient, Recipe, RecipeIngredient, User
 from .pagination import RecipePagination
 
+from foodgram.common_classes import Base64ImageField
+
 class IngredientSerializer(serializers.ModelSerializer):
     class Meta:
         model = Ingredient
@@ -42,7 +44,9 @@ class RecipeGetSerializer(serializers.ModelSerializer):
         many=True,
         source="recipeingredient_set"
     )
+    image = Base64ImageField()
     pagination_class = RecipePagination
+
     class Meta:
         model = Recipe
         fields = ("id","author","ingredients","is_favorited","is_in_shopping_cart","name","image","text","cooking_time")
@@ -82,7 +86,7 @@ class RecipePostSerializer(serializers.ModelSerializer):
         many=True,
         source="recipeingredient_set"
     )
-
+    image = Base64ImageField(required=True, allow_null=False)
     class Meta:
         model = Recipe
         fields = ("author", "ingredients", "image", "name", "text", "cooking_time")
@@ -129,3 +133,8 @@ class SubscribtionsSerializer(serializers.ModelSerializer):
         request = self.context.get("request")
         return RecipeGetSerializer(recipes, many=True, context={"request": request}).data
         
+class RecipeInShoppingCartSerializer(serializers.ModelSerializer):
+    
+    class Meta:
+        model = Recipe
+        fields = ("id","name","image","coooking_time")
