@@ -12,6 +12,8 @@ from .serializers import (
 )
 from .permissions import OwnerOrReadOnly
 
+from posts.serializer import SubscribtionsSerializer
+
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
 
@@ -93,11 +95,16 @@ class UserViewSet(viewsets.ModelViewSet):
             if user == author:
                 return Response({"error": "Нельзя подписаться на себя"}, status=400)
 
+            if Subscription.objects.filter(subsciber=user, author=author).exists():
+                return Response(status=400)
+
             Subscription.objects.get_or_create(
                 subsciber=user,
                 author=author
             )
-            return Response({"status": "subscribed"}, status=201)
+
+            Responsedata = UserOutputSerializer(user, context={"request" : request})
+            return Response(Responsedata.data, status=201)
         
         if request.method == 'DELETE':
             if Subscription.objects.filter(
@@ -109,7 +116,7 @@ class UserViewSet(viewsets.ModelViewSet):
                     author=author
                 ).delete()
                 return Response({"status": "unsubscribed"}, status=204)
-            return Response(status=404)
+            return Response(status=400)
             
     @action(detail=False, methods=["put", "delete"], permission_classes=[OwnerOrReadOnly,], url_path = 'me/avatar')
     def avatar(self, request, pk=None):

@@ -4,7 +4,7 @@ from django.contrib.auth import get_user_model
 from users.models import User
 
 class Ingredient(models.Model):
-    name = models.CharField(max_length=128, blank=False)
+    name = models.CharField(max_length=256, blank=False)
     measurement_unit = models.CharField(max_length=16, blank=False)
 
 class Recipe(models.Model):
@@ -19,6 +19,15 @@ class RecipeIngredient(models.Model):
     recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE)
     ingredient = models.ForeignKey(Ingredient, on_delete=models.CASCADE)
     amount = models.PositiveIntegerField()
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['recipe', 'ingredient'],
+                name='unique_ingredient_per_recipe'
+            )
+        ]
+
 
 class Favourite(models.Model):
     user = models.ForeignKey(
