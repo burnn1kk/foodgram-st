@@ -1,11 +1,17 @@
 from django.db import models
 from django.contrib.auth import get_user_model
-
 from users.models import User
+
+import string
+import random
 
 class Ingredient(models.Model):
     name = models.CharField(max_length=256, blank=False)
     measurement_unit = models.CharField(max_length=16, blank=False)
+
+def generate_short_code(length=5):
+    chars = string.ascii_letters + string.digits
+    return ''.join(random.choice(chars) for _ in range(length))
 
 class Recipe(models.Model):
     author = models.ForeignKey(User, on_delete=models.CASCADE,related_name='recipes', blank=False)

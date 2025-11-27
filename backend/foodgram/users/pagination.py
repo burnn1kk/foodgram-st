@@ -5,3 +5,9 @@ class UsersPagination(PageNumberPagination):
     page_size_query_param = "limit"
     page_query_param = "page"
     page_size = 1
+
+
+class SubscriptionPagination(PageNumberPagination):
+    page_size_query_param = "limit"
+    page_query_param = "page"
+    page_size = 1

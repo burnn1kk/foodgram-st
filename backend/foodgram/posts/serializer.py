@@ -173,26 +173,38 @@ class SubscribtionsSerializer(serializers.ModelSerializer):
             "is_subscribed",
             "recipes",
             "recipes_count",
+            "avatar"
         )
 
     def get_is_subscribed(self, obj):
         return True
 
     def get_recipes(self, obj):
-        request = self.context.get("request")
+        request = self.context["request"]
         limit = request.query_params.get("recipes_limit")
 
-        qs = obj.recipes.all()
+        queryset = obj.recipes.all()
 
-        if limit is not None and limit.isdigit():
-            qs = qs[:int(limit)]
+        if limit and limit.isdigit():
+            queryset = queryset[:int(limit)]
 
-        return RecipeGetSerializer(qs, many=True).data
+        return RecipeGetSerializer(
+            queryset,
+            many=True,
+            context=self.context
+        ).data
 
+
+    
+    def get_author(self, obj):
+        return AuthorGetSerializer(
+            obj.author,
+            context=self.context    # ← ОБЯЗАТЕЛЬНО
+        ).data
 
         
-class RecipeInShoppingCartSerializer(serializers.ModelSerializer):
+class ShortRecipeInfoSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Recipe
-        fields = ("id","name","image","coooking_time")
+        fields = ("id","name","image","cooking_time")

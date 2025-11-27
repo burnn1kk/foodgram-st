@@ -11,12 +11,11 @@ from .serializers import (
     UserAvatarSerializer
 )
 from .permissions import OwnerOrReadOnly
-
-from posts.serializer import SubscribtionsSerializer
-
+from .pagination import UsersPagination
+from posts.serializer import SubscribtionsSerializer, AuthorGetSerializer
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
-
+    pagination_class = UsersPagination
     def get_permissions(self):
         action = self.action
         if action == "list" or action == "create" or action == "retrieve":
@@ -30,11 +29,10 @@ class UserViewSet(viewsets.ModelViewSet):
     def list(self, request):
         queryset = User.objects.all()
         page = self.paginate_queryset(queryset)
-        serializer = UserOutputSerializer(
+        serializer = AuthorGetSerializer(
             page, context={"request": request}, many=True
         )  # many=True указывает сериализатору что объектов больше 1 => обрабатывать каждый отдельно
-        paginated = self.get_paginated_response(serializer.data)
-        return Response(paginated.data, status=200)
+        return  self.get_paginated_response(serializer.data)
 
     def retrieve(self, request, *args, **kwargs):
         user_id = self.kwargs.get("pk")
@@ -42,7 +40,7 @@ class UserViewSet(viewsets.ModelViewSet):
             user = User.objects.get(
                 id=user_id
             )  # здесь был интересный момент когда передавая в serializer queryset при many=False получалась ошибка об отсутсвия поля
-            serializer = UserOutputSerializer(
+            serializer = AuthorGetSerializer(
                 user, context={"request": request}
             )  # при many=False в srializer должен передаваться строго 1 объект
             return Response(serializer.data, status=200)  # queryset из 1 объекта != 1 объект => ошибка
@@ -60,7 +58,7 @@ class UserViewSet(viewsets.ModelViewSet):
     def me(self, request):
         user = request.user
         id = user.id
-        serializer = UserOutputSerializer(user, context={"request": request})
+        serializer = AuthorGetSerializer(user, context={"request": request})
         return Response(serializer.data, status=200)
 
     @action(detail=False, methods=["post"], permission_classes=[IsAuthenticated])
@@ -103,7 +101,7 @@ class UserViewSet(viewsets.ModelViewSet):
                 author=author
             )
 
-            Responsedata = UserOutputSerializer(user, context={"request" : request})
+            Responsedata = UserOutputSerializer(author, context={"request" : request})
             return Response(Responsedata.data, status=201)
         
         if request.method == 'DELETE':

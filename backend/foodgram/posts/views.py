@@ -4,11 +4,12 @@ from rest_framework.decorators import action
 from rest_framework.serializers import ValidationError
 
 from .models import Ingredient, Recipe, RecipeIngredient, Favourite, ShoppingCart
-from .serializer import IngredientSerializer, RecipeGetSerializer, RecipePostSerializer, SubscribtionsSerializer, RecipeInShoppingCartSerializer    
+from .serializer import IngredientSerializer, RecipeGetSerializer, RecipePostSerializer, SubscribtionsSerializer, ShortRecipeInfoSerializer    
 from .pagination import RecipePagination
 from .permissions import OwnerOrReadOnly
 
 from users.models import User
+from users.pagination import SubscriptionPagination
 
 class RecipesViewSet(viewsets.ModelViewSet):
     #queryset = Recipe.objects.all()
@@ -68,8 +69,7 @@ class RecipesViewSet(viewsets.ModelViewSet):
             return Response(status=404)
         page = self.paginate_queryset(queryset)
         serializer = RecipeGetSerializer(page, context={"request" : request}, many=True)
-        paginated = self.get_paginated_response(serializer.data)
-        return Response(paginated.data, status=200)
+        return self.get_paginated_response(serializer.data)
     
     def retrieve(self, request, *args, **kwargs):
         recipe_id = self.kwargs.get("pk")
@@ -87,9 +87,10 @@ class RecipesViewSet(viewsets.ModelViewSet):
         user = request.user
 
         if request.method == "POST":
-            if Favourite.objects.filter(user=user, recipe=recipe).exists():
+            if not Favourite.objects.filter(user=user, recipe=recipe).exists():
                 Favourite.objects.get_or_create(user=user,recipe = recipe)
-                return Response({"status":"added to favourite"}, status=201)
+                resp = ShortRecipeInfoSerializer(recipe)
+                return Response(resp.data, status=201)
             return Response(status=400)
         
         if request.method == "DELETE":
@@ -102,17 +103,20 @@ class RecipesViewSet(viewsets.ModelViewSet):
     def shopping_cart(self, request, pk=None):
         recipe = self.get_object()
         user = request.user
-        serializer = RecipeInShoppingCartSerializer(recipe)
+        
         if request.method == "POST":
             if ShoppingCart.objects.filter(user=user, recipe=recipe).exists():
                 return Response(status=400)
             ShoppingCart.objects.get_or_create(user=user, recipe=recipe)
-            return Response({"status" : "added to shopping cart"}, status=201)
+            serializer = ShortRecipeInfoSerializer(recipe)
+            return Response(serializer.data, status=201)
         if request.method == "DELETE":
             if ShoppingCart.objects.filter(user=user, recipe=recipe).exists():
                 ShoppingCart.objects.filter(user=user, recipe=recipe).delete()
                 return Response(status=204)
             return Response(status=400)
+
+
 
 class IngredientsViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Ingredient.objects.all()
@@ -132,6 +136,20 @@ class IngredientsViewSet(viewsets.ReadOnlyModelViewSet):
 class SubscribtionsViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = SubscribtionsSerializer
     permission_classes = [permissions.IsAuthenticated]
+    pagination_class = SubscriptionPagination
 
     def get_queryset(self):
-        return User.objects.filter(subscribers__subsciber=self.request.user).distinct()
+        return User.objects.filter(
+            subscribers__subsciber=self.request.user
+        ).distinct()
+
+    def list(self, request):
+        queryset = self.get_queryset()
+        page = self.paginate_queryset(queryset)
+
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
