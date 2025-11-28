@@ -4,6 +4,7 @@ from .models import User
 from posts.models import Recipe
 from foodgram.common_classes import Base64ImageField
 
+
 class UserCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
@@ -28,6 +29,7 @@ class UserOutputSerializer(serializers.ModelSerializer):
     is_subscribed = serializers.SerializerMethodField()
     recipes = serializers.SerializerMethodField()
     recipes_count = serializers.SerializerMethodField()
+
     class Meta:
         model = User
         fields = (
@@ -49,10 +51,14 @@ class UserOutputSerializer(serializers.ModelSerializer):
             return False
 
         return user.subscriptions.filter(author=obj).exists()
-    
+
     def get_recipes(self, obj):
         recipes = Recipe.objects.filter(author=obj)
+        request = self.context["request"]
+        limit = request.query_params.get("recipes_limit")
 
+        if limit and limit.isdigit():
+            recipes = recipes[: int(limit)]
         return [
             {
                 "id": recipe.id,
@@ -66,9 +72,11 @@ class UserOutputSerializer(serializers.ModelSerializer):
     def get_recipes_count(self, obj):
         return Recipe.objects.filter(author=obj).count()
 
+
 class UserSetPasswordSerializer(serializers.Serializer):
     current_password = serializers.CharField(required=True)
     new_password = serializers.CharField(required=True)
+
 
 class UserAvatarSerializer(serializers.ModelSerializer):
     avatar = Base64ImageField(required=True, allow_null=False)

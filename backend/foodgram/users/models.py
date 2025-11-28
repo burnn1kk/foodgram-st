@@ -3,14 +3,16 @@ from django.contrib.auth.models import AbstractUser
 from django.core.validators import RegexValidator
 
 username_validator = RegexValidator(
-    regex=r'^[\w.@+-]+\Z',
-    message='Username may contain only letters, numbers, and @/./+/-/_ characters.'
+    regex=r"^[\w.@+-]+\Z",
+    message="Username may contain only letters, numbers, and @/./+/-/_ characters.",
 )
 
 
 class User(AbstractUser):
     email = models.EmailField(unique=True)
-    username = models.CharField(max_length=50, unique=True, validators=[username_validator])
+    username = models.CharField(
+        max_length=50, unique=True, validators=[username_validator]
+    )
 
     first_name = models.CharField(max_length=150)
     last_name = models.CharField(max_length=150)
