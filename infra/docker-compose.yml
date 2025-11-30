@@ -27,12 +27,11 @@ services:
       "
     expose:
       - "8000"
-
   frontend:
     container_name: foodgram-frontend
     build: ../frontend
     volumes:
-      - ../frontend/build:/build
+      - ../frontend/build:/usr/share/nginx/html:ro
     restart: "no"
 
   nginx:
@@ -44,12 +43,14 @@ services:
       - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
       - static_volume:/static/
       - media_volume:/media/
-      - ../frontend/build:/usr/share/nginx/html/
-      - ../docs:/usr/share/nginx/html/api/docs/
+      - ../frontend/build:/usr/share/nginx/html:ro
     depends_on:
       - backend
+
 
 volumes:
   pg_data:
   static_volume:
   media_volume:
+  frontend_build:
+
