@@ -7,7 +7,7 @@ WORKDIR /app
 COPY package*.json ./
 COPY yarn.lock ./
 
-# Ставим зависимости
+# Устанавливаем зависимости
 RUN npm install
 
 # Копируем весь исходник
@@ -16,21 +16,8 @@ COPY . ./
 # Сборка фронта
 RUN npm run build
 
-# === Stage 2: Nginx ===
-FROM nginx:1.25.4-alpine
-
-# Удаляем дефолтный html
-RUN rm -rf /usr/share/nginx/html/*
-
-# Копируем собранный фронт
-COPY --from=build /app/build /usr/share/nginx/html
-
-# Копируем кастомный конфиг nginx
-COPY nginx/default.conf /etc/nginx/conf.d/default.conf
-
-# Открываем порт
-EXPOSE 80
-
-# Запускаем nginx
-CMD ["nginx", "-g", "daemon off;"]
+# Stage 2: только результат сборки
+FROM alpine:latest AS frontend-build
+WORKDIR /app
+COPY --from=build /app/build /app/build
 
