@@ -30,7 +30,7 @@ class Recipe(models.Model):
     )
     cooking_time = models.PositiveIntegerField(help_text="Время в минутах", blank=False)
     short_code = models.CharField(max_length=16, unique=True, blank=True)
-
+    pub_date = models.DateTimeField(auto_now_add=True)
     def save(self, *args, **kwargs):
         # Генерируем код только один раз — при создании
         if not self.short_code:

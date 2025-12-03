@@ -40,7 +40,7 @@ class RecipesViewSet(viewsets.ModelViewSet):
             if param not in allowed_params:
                 raise ValidationError({param: "Неизвестный параметр"})
 
-        queryset = Recipe.objects.all().order_by("id")
+        queryset = Recipe.objects.all().order_by("-pub_date")
         user = self.request.user
 
         author = self.request.query_params.get("author")
