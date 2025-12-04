@@ -9,7 +9,7 @@ Foodgram — это веб-приложение, где пользователи
 Проект разработан с использованием следующих технологий:
 
 * Backend: Python/Django Rest Framework
-* Frontend: HTML, CSS, JavaScript (или React/Vue)
+* Frontend: HTML, CSS, JavaScript
 * База данных: PostgreSQL
 * Аутентификация и управление пользователями: Djoser
 * Контейнеризация и деплой: Docker, Docker Compose
@@ -59,3 +59,4 @@ docker compose build
 docker compose up
 ```
 
+Ингредиенты для рецептов подгружаются в БД при постройке образов с помощью скрипта import_ingredients.py
