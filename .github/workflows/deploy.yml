@@ -61,7 +61,7 @@ jobs:
         run: |
           ssh -o StrictHostKeyChecking=no \
           -p 22 \
-          root@ubuntuhost \
+          burnn1kvm@ubuntuhost \
           "cd ~/foodgram-st/infra && docker compose pull && docker compose up -d --remove-orphans"
 
 
