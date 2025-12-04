@@ -57,14 +57,11 @@ jobs:
           echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
 
-      - name: Deploy to VM via SSH
+      - name: Deploy via SSH over Tailscale
         run: |
-          ssh -o StrictHostKeyChecking=no -p ${{ secrets.SSH_PORT }} \
-            ${{ secrets.TARGET_USER }}@${{ secrets.TARGET_HOST }} "
-              cd ~/foodgram-st/infra &&
-              docker-compose pull &&
-              docker-compose down &&
-              docker-compose up -d --build &&
-              docker system prune -af
-            "
+          ssh -o StrictHostKeyChecking=no \
+              -p 443 \
+              root@ubuntuhost \
+              "cd /opt/foodgram && docker compose pull && docker compose up -d --remove-orphans"
+
 
