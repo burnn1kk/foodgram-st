@@ -37,6 +37,7 @@ jobs:
           docker push ${{ secrets.DOCKERHUB_USERNAME }}/foodgram-backend:latest
           docker push ${{ secrets.DOCKERHUB_USERNAME }}/foodgram-frontend:latest
 
+# Попытка обновить докер образы на VM через TailScale (VM не имеет внешнего IP, пробросить порты роутера нет возможности)
 
   deploy:
     name: Deploy to VM
