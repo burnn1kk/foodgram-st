@@ -60,8 +60,9 @@ jobs:
       - name: Deploy via SSH over Tailscale
         run: |
           ssh -o StrictHostKeyChecking=no \
-              -p 22 \
-              root@ubuntuhost \
-              "cd /opt/foodgram && docker compose pull && docker compose up -d --remove-orphans"
+          -p 22 \
+          root@ubuntuhost \
+          "cd ~/foodgram-st/infra && docker compose pull && docker compose up -d --remove-orphans"
+
 
 
