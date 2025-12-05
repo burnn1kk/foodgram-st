@@ -1,8 +1,8 @@
 from rest_framework import serializers
 
-from .models import Ingredient, Recipe, RecipeIngredient, User
+from posts.models import Ingredient, Recipe, RecipeIngredient
+from users.models import User
 from .pagination import RecipePagination
-
 
 from foodgram.common_classes import Base64ImageField
 
@@ -230,7 +230,7 @@ class SubscribtionsSerializer(serializers.ModelSerializer):
     def get_author(self, obj):
         return AuthorGetSerializer(
             obj.author,
-            context=self.context,  # ← ОБЯЗАТЕЛЬНО
+            context=self.context,
         ).data
 
 
@@ -238,3 +238,89 @@ class ShortRecipeInfoSerializer(serializers.ModelSerializer):
     class Meta:
         model = Recipe
         fields = ("id", "name", "image", "cooking_time")
+
+
+class UserCreateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ("id", "email", "username", "first_name", "last_name", "password")
+        extra_kwargs = {"password": {"write_only": True}}
+
+    def create(
+        self, validated_data
+    ):  # тк мы не используем стандартные эндпоинты djoser а написали свой вьюсет, то теперь по стандарту пароли не хешируются =>
+        password = validated_data.pop(
+            "password"
+        )  # в бд они появляются в незашифрованном виде
+        user = User(
+            **validated_data
+        )  # интересно что вызываемую функцию хеширования можно задавать, хоть вообще свою написать
+        user.set_password(password)  # django.contrib.auth.hashers.make_password
+        user.save()
+        return user
+
+
+class UserOutputSerializer(serializers.ModelSerializer):
+    is_subscribed = serializers.SerializerMethodField()
+    recipes = serializers.SerializerMethodField()
+    recipes_count = serializers.SerializerMethodField()
+
+    class Meta:
+        model = User
+        fields = (
+            "id",
+            "email",
+            "username",
+            "first_name",
+            "last_name",
+            "avatar",
+            "is_subscribed",
+            "recipes_count",
+            "recipes",
+        )
+
+    def get_is_subscribed(self, obj):
+        user = self.context["request"].user
+
+        if not user.is_authenticated:
+            return False
+
+        return user.subscriptions.filter(author=obj).exists()
+
+    def get_recipes(self, obj):
+        recipes = Recipe.objects.filter(author=obj)
+        request = self.context["request"]
+        limit = request.query_params.get("recipes_limit")
+
+        if limit and limit.isdigit():
+            recipes = recipes[: int(limit)]
+        return [
+            {
+                "id": recipe.id,
+                "name": recipe.name,
+                "image": recipe.image.url if recipe.image else None,
+                "cooking_time": recipe.cooking_time,
+            }
+            for recipe in recipes
+        ]
+
+    def get_recipes_count(self, obj):
+        return Recipe.objects.filter(author=obj).count()
+
+
+class UserSetPasswordSerializer(serializers.Serializer):
+    current_password = serializers.CharField(required=True)
+    new_password = serializers.CharField(required=True)
+
+
+class UserAvatarSerializer(serializers.ModelSerializer):
+    avatar = Base64ImageField(required=True, allow_null=False)
+
+    class Meta:
+        model = User
+        fields = ("avatar",)
+
+    def validate_avatar(self, value):
+        if value is None:
+            raise serializers.ValidationError("avatar cannot be null")
+        return value
