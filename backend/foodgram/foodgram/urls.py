@@ -18,12 +18,12 @@ router.register("users", UserViewSet, basename="users")
 
 def short_link_redirect(request, code):
     recipe = get_object_or_404(Recipe, short_code=code)
-    return redirect(f"/api/recipes/{recipe.id}/")
+    return redirect(f"/recipes/{recipe.id}/")
 
 
 urlpatterns = [
     path("admin/", admin.site.urls),
-    path("s/<str:code>/", short_link_redirect),
+    path("api/short_link/<str:code>/", short_link_redirect),
     path("api/users/subscriptions/", SubscribtionsViewSet.as_view({"get": "list"})),
     path("api/", include(router.urls)),
     path("api/auth/", include("djoser.urls.authtoken")),

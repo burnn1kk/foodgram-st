@@ -222,7 +222,7 @@ class RecipesViewSet(viewsets.ModelViewSet):
     def get_link(self, request, pk=None):
         recipe = self.get_object()
 
-        short_url = f"https://foodgram.example.org/s/{recipe.short_code}"
+        short_url = f"http://127.0.0.1/api/short_link/{recipe.short_code}"
 
         return Response({"short-link": short_url}, status=200)
 
