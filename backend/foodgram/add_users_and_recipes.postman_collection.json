@@ -926,92 +926,91 @@
 	"variable": [
 		{
 			"key": "baseUrl",
-			"value": ""
+			"value": "http://127.0.0.1"
 		},
 		{
 			"key": "email",
-			"value": ""
+			"value": "\"user_one@gmail.com\""
 		},
 		{
 			"key": "username",
-			"value": ""
+			"value": "\"burnn1k\""
 		},
 		{
 			"key": "password",
-			"value": ""
+			"value": "\"skibidisigma228\""
 		},
 		{
 			"key": "secondUserEmail",
-			"value": ""
+			"value": "\"user_two@gmail.com\""
 		},
 		{
 			"key": "secondUserUsername",
-			"value": ""
+			"value": "\"maxonphu\""
 		},
 		{
 			"key": "thirdUserEmail",
-			"value": ""
+			"value": "\"user_three@gmail.com\""
 		},
 		{
 			"key": "thirdUserUsername",
-			"value": ""
+			"value": "\"junger_online2056\""
 		},
 		{
 			"key": "firstIndredientId",
-			"value": ""
+			"value": "1"
 		},
 		{
 			"key": "firstIngredientAmount",
-			"value": ""
+			"value": "2"
 		},
 		{
 			"key": "secondIndredientId",
-			"value": ""
+			"value": "2"
 		},
 		{
 			"key": "secondIngredientAmount",
-			"value": ""
+			"value": "4"
 		},
 		{
 			"key": "userToken",
-			"value": ""
+			"value": "2a77bdda4d1e17e679d6729d1d2b2874d00edd1d"
 		},
 		{
 			"key": "secondUserToken",
-			"value": "",
-			"type": "default"
+			"value": "9cee836895ab1ee7105d036df6fffca9d2d0bcd7"
 		},
 		{
 			"key": "userId",
-			"value": ""
+			"value": 1
 		},
 		{
 			"key": "secondUserId",
-			"value": ""
+			"value": 2
 		},
 		{
 			"key": "thirdUserId",
-			"value": ""
+			"value": 3
 		},
 		{
 			"key": "firstRecipeId",
-			"value": ""
+			"value": 1
 		},
 		{
 			"key": "secondRecipeId",
-			"value": ""
+			"value": 2
 		},
 		{
 			"key": "thirdRecipeId",
-			"value": ""
+			"value": 3
 		},
 		{
 			"key": "fourthRecipeId",
-			"value": ""
+			"value": 4
 		},
 		{
 			"key": "fifthRecipeId",
-			"value": ""
+			"value": 5
 		}
 	]
 }
