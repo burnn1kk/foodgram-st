@@ -60,3 +60,21 @@ docker compose up
 ```
 
 Ингредиенты для рецептов подгружаются в БД при постройке образов с помощью скрипта import_ingredients.py
+
+---
+
+## Тестовые данные
+Если вы хотите проверить работоспособность проекта с уже готовым пользователями и рецептами, то на этот случай заготовлена коллекция postman.
+Для запуска необходимо иметь Node.js и сам postman.
+
+```bash
+sudo apt install nodejs npm
+npm install -g newman
+cd backend/foodgram
+newman run add_users_and_recipes.postman_collection.json 
+```
+Если вы собираетесь использовать тестовые данные не на localhost, то измените переменную baseUrl в add_users_and_recipes.postman_collection.json.
+
+После этого на сайте будет несколько рецептов (без картинок) от разных пользователей. Данные для входа под любым из пользователей так же можно посмотреть в add_users_and_recipes.postman_collection.json.
+
+
