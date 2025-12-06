@@ -14,3 +14,10 @@ class Base64ImageField(serializers.ImageField):
             data = ContentFile(base64.b64decode(imgstr), name=file_name)
 
         return super().to_internal_value(data)
+
+
+min_ingredient_amount = 1
+max_ingredient_amount = 32000
+
+min_cooking_time = 1
+max_cooking_time = 32000

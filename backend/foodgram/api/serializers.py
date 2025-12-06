@@ -4,7 +4,13 @@ from posts.models import Ingredient, Recipe, RecipeIngredient
 from users.models import User
 from .pagination import RecipePagination
 
-from foodgram.common_classes import Base64ImageField
+from foodgram.common_classes import (
+    Base64ImageField,
+    min_cooking_time,
+    max_cooking_time,
+    min_ingredient_amount,
+    max_ingredient_amount,
+)
 
 
 class IngredientSerializer(serializers.ModelSerializer):
@@ -90,81 +96,94 @@ class IngredientInRecipeSerializer(
     serializers.Serializer
 ):  # IngredientS_SerializerPOST
     id = serializers.IntegerField()
-    amount = serializers.IntegerField()
+    amount = serializers.IntegerField(
+        min_value=min_ingredient_amount, max_value=max_ingredient_amount
+    )
 
     def validate_id(self, value):
         if not Ingredient.objects.filter(id=value).exists():
             raise serializers.ValidationError("Ингредиента с таким id не существует")
         return value
 
-    def validate_amount(self, value):
-        if value <= 0:
-            raise serializers.ValidationError(
-                "Количество ингредиента должно быть больше 0"
-            )
-        return value
-
 
 class RecipePostSerializer(serializers.ModelSerializer):
     ingredients = IngredientInRecipeSerializer(many=True, source="recipeingredient_set")
     image = Base64ImageField(required=True, allow_null=False)
+    cooking_time = serializers.IntegerField(
+        min_value=min_cooking_time, max_value=max_cooking_time
+    )
 
     class Meta:
         model = Recipe
         fields = ("author", "ingredients", "image", "name", "text", "cooking_time")
         read_only_fields = ("author",)
 
-    def create(self, validated_data):
-        ingredients = validated_data.pop(
-            "recipeingredient_set"
-        )  # необходимо тк в модели recipe: ingredients = models.ManyToManyField(Ingredient, through="RecipeIngredient")
-        if len(ingredients) == 0:
-            raise serializers.ValidationError("Список ингредиентов пуст")
-        for i in range(0, len(ingredients)):  # слегка говнокода (я реально устал)
-            for j in range(i + 1, len(ingredients)):
-                if ingredients[i] == ingredients[j]:
-                    raise serializers.ValidationError(
-                        "В рецепте есть повторяющиеся ингредиенты"
-                    )
-        author = self.context[
-            "request"
-        ].user  # поэтому ожидается набор объектов Ingredient, но там нет поля amount => ошибка
-        recipe = Recipe.objects.create(
-            author=author, **validated_data
-        )  # source позволяет переопределить, откуда именно сериализатор возьмёт данные.
-
+    def _validate_unique_ingredient_ids(self, ingredients):
+        seen = set()
         for ing in ingredients:
-            ingredient_obj = Ingredient.objects.get(id=ing["id"])
-            RecipeIngredient.objects.create(
-                recipe=recipe, ingredient=ingredient_obj, amount=ing["amount"]
+            ingredient_id = ing["id"]
+            if ingredient_id in seen:
+                raise serializers.ValidationError(
+                    "В рецепте есть повторяющиеся ингредиенты"
+                )
+            seen.add(ingredient_id)
+        return seen
+
+    def _create_recipe_ingredients(self, recipe, ingredients):
+        """Создание связей ингредиентов с рецептом через bulk_create."""
+        # Получаем все ID ингредиентов
+        ingredient_ids = [ing["id"] for ing in ingredients]
+
+        # Получаем все объекты ингредиентов одним запросом
+        ingredient_objs = Ingredient.objects.filter(id__in=ingredient_ids)
+        ingredient_map = {ing.id: ing for ing in ingredient_objs}
+
+        # Создаем список объектов RecipeIngredient для bulk_create
+        recipe_ingredients = []
+        for ing in ingredients:
+            ingredient_id = ing["id"]
+            ingredient_obj = ingredient_map.get(ingredient_id)
+
+            if not ingredient_obj:
+                raise serializers.ValidationError(
+                    f"Ингредиент с ID {ingredient_id} не найден"
+                )
+
+            recipe_ingredients.append(
+                RecipeIngredient(
+                    recipe=recipe, ingredient=ingredient_obj, amount=ing["amount"]
+                )
             )
 
+        # Создаем все связи одним запросом
+        RecipeIngredient.objects.bulk_create(recipe_ingredients)
+
+    def create(self, validated_data):
+        ingredients = validated_data.pop("recipeingredient_set")
+
+        if not ingredients:
+            raise serializers.ValidationError("Список ингредиентов пуст")
+
+        self._validate_unique_ingredient_ids(ingredients)
+
+        author = self.context["request"].user
+        recipe = Recipe.objects.create(author=author, **validated_data)
+
+        self._create_recipe_ingredients(recipe, ingredients)
         return recipe
 
     def update(self, instance, validated_data):
         ingredients = validated_data.pop("recipeingredient_set", None)
 
         if ingredients is not None:
-            if ingredients == []:
+            if not ingredients:
                 raise serializers.ValidationError("Список ингредиентов пуст")
 
-            else:
-                # Проверка на дубликаты
-                seen = set()
-                for ing in ingredients:
-                    if ing["id"] in seen:
-                        raise serializers.ValidationError(
-                            "В рецепте есть повторяющиеся ингредиенты"
-                        )
-                    seen.add(ing["id"])
+            self._validate_unique_ingredient_ids(ingredients)
 
-                # Пересоздание списка ингредиентов
-                instance.recipeingredient_set.all().delete()
-                for ing in ingredients:
-                    ingredient_obj = Ingredient.objects.get(id=ing["id"])
-                    RecipeIngredient.objects.create(
-                        recipe=instance, ingredient=ingredient_obj, amount=ing["amount"]
-                    )
+            # Пересоздание списка ингредиентов
+            instance.recipeingredient_set.all().delete()
+            self._create_recipe_ingredients(instance, ingredients)
 
         for attr, value in validated_data.items():
             setattr(instance, attr, value)
@@ -184,13 +203,6 @@ class RecipePostSerializer(serializers.ModelSerializer):
         if qs.exists():
             raise serializers.ValidationError("Рецепт с таким названием уже существует")
 
-        return value
-
-    def validate_cooking_time(self, value):
-        if value <= 0:
-            raise serializers.ValidationError(
-                "Время приготовления должно быть больше 0"
-            )
         return value
 
 
@@ -291,7 +303,7 @@ class UserOutputSerializer(serializers.ModelSerializer):
         return user.subscriptions.filter(author=obj).exists()
 
     def get_recipes(self, obj):
-        recipes = Recipe.objects.filter(author=obj)
+        recipes = obj.recipes.all()  # Вместо Recipe.objects.filter(author=obj)
         request = self.context["request"]
         limit = request.query_params.get("recipes_limit")
 
@@ -308,7 +320,7 @@ class UserOutputSerializer(serializers.ModelSerializer):
         ]
 
     def get_recipes_count(self, obj):
-        return Recipe.objects.filter(author=obj).count()
+        return obj.recipes.count()  # Вместо Recipe.objects.filter(author=obj).count()
 
 
 class UserSetPasswordSerializer(serializers.Serializer):

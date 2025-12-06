@@ -39,7 +39,7 @@ pip install -r requirements.txt
 ```txt
 DJANGO_SECRET_KEY="<SECRET_KEY>"
 ALLOWED_HOSTS=localhost,127.0.0.1
-
+BASE_URL=http://127.0.0.1:8000
 POSTGRES_DB=foodgram_bd
 POSTGRES_USER=foodgram_user
 POSTGRES_PASSWORD=foodgram_password
