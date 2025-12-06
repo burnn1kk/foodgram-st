@@ -44,7 +44,7 @@ INSTALLED_APPS = [
     "djoser",
     "posts.apps.PostsConfig",
     "users.apps.UsersConfig",
-    "api.apps.ApiConfig"
+    "api.apps.ApiConfig",
 ]
 
 

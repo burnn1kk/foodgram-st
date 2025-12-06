@@ -5,7 +5,12 @@ from django.shortcuts import get_object_or_404, redirect
 from django.conf import settings
 from django.conf.urls.static import static
 
-from api.views import RecipesViewSet, IngredientsViewSet, SubscribtionsViewSet, UserViewSet
+from api.views import (
+    RecipesViewSet,
+    IngredientsViewSet,
+    SubscribtionsViewSet,
+    UserViewSet,
+)
 from posts.models import Recipe
 
 router = DefaultRouter()

@@ -194,6 +194,12 @@ class RecipePostSerializer(serializers.ModelSerializer):
         return value
 
 
+class ShortRecipeInfoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Recipe
+        fields = ("id", "name", "image", "cooking_time")
+
+
 class SubscribtionsSerializer(serializers.ModelSerializer):
     recipes = serializers.SerializerMethodField()
     recipes_count = serializers.IntegerField(source="recipes.count", read_only=True)
@@ -225,19 +231,16 @@ class SubscribtionsSerializer(serializers.ModelSerializer):
         if limit and limit.isdigit():
             queryset = queryset[: int(limit)]
 
-        return RecipeGetSerializer(queryset, many=True, context=self.context).data
+        serializer = ShortRecipeInfoSerializer(
+            queryset, many=True, context=self.context
+        )
+        return serializer.data
 
     def get_author(self, obj):
         return AuthorGetSerializer(
             obj.author,
             context=self.context,
         ).data
-
-
-class ShortRecipeInfoSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Recipe
-        fields = ("id", "name", "image", "cooking_time")
 
 
 class UserCreateSerializer(serializers.ModelSerializer):

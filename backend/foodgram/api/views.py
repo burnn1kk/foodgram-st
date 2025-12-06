@@ -5,7 +5,7 @@ from rest_framework.serializers import ValidationError
 from django.http import HttpResponse
 from django.db.models import Sum
 
-from users.models import User
+from users.models import User, Subscription
 from posts.models import Ingredient, Recipe, RecipeIngredient, Favourite, ShoppingCart
 from .serializers import (
     IngredientSerializer,
@@ -13,11 +13,11 @@ from .serializers import (
     RecipePostSerializer,
     SubscribtionsSerializer,
     ShortRecipeInfoSerializer,
-    SubscribtionsSerializer,
     AuthorGetSerializer,
     UserCreateSerializer,
     UserSetPasswordSerializer,
     UserAvatarSerializer,
+    UserOutputSerializer,
 )
 from .pagination import RecipePagination, UsersPagination, SubscriptionPagination
 from .permissions import OwnerOrReadOnly
@@ -263,7 +263,9 @@ class SubscribtionsViewSet(viewsets.ReadOnlyModelViewSet):
             serializer = self.get_serializer(page, many=True)
             return self.get_paginated_response(serializer.data)
 
-        serializer = self.get_serializer(queryset, many=True)
+        serializer = self.get_serializer(
+            queryset, many=True, context={"request": request}
+        )
         return Response(serializer.data)
 
 
@@ -348,6 +350,7 @@ class UserViewSet(viewsets.ModelViewSet):
         detail=True,
         methods=["post", "delete"],
         permission_classes=[permissions.IsAuthenticated],
+        url_path="subscribe",
         url_name="subscribe",
     )
     def subscribe(self, request, pk=None):
